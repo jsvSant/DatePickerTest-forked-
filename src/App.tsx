@@ -1,39 +1,77 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useForm, Controller, Control } from "react-hook-form";
 import "./App.css";
+import { useState } from "react";
+import { DatePicker, DatePickerProps } from "antd";
+import dayjs from "dayjs";
+
+interface RHFDatePickerProps {
+  control: Control<any>;
+  name: string;
+  placeholder?: string;
+}
+function RHFDatePicker({ control, name, placeholder }: RHFDatePickerProps) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      rules={{ required: "Field required" }}
+      render={({ field, fieldState }) => {
+        return (
+          <>
+            <DatePicker
+              format={"DD/MM/YYYY"}
+              placeholder={placeholder}
+              status={fieldState.error ? "error" : undefined}
+              selectsRange={true}
+              ref={field.ref}
+              name={field.name}
+              onBlur={field.onBlur}
+              value={field.value ? dayjs(field.value) : null}
+              onChange={(date: string) => {
+                field.onChange(date ? date.valueOf() : null);
+              }}
+            />
+            <br />
+            {fieldState.error ? <span>{fieldState.error.message}</span> : null}
+          </>
+        );
+      }}
+    />
+  );
+}
 
 function App() {
-  const [count, setCount] = useState(0);
+  const { handleSubmit, control, watch } = useForm<{
+    dataInicio: string;
+    dataFim: string;
+  }>({});
 
   return (
-    <div className="App">
+    <form
+      onSubmit={handleSubmit((data) => {
+         data.dataInicio = dayjs(data.dataInicio).format("DD/MM/YYYY");
+         data.dataFim = dayjs(data.dataFim).format("DD/MM/YYYY");
+        console.log("return data:", data);
+      })}
+    >
       <div>
-        <a href="https://reactjs.org" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
+        <span>{JSON.stringify(watch("dataInicio"))}</span>
+        <br />
+        <p>data inicio</p>
+        <RHFDatePicker
+          control={control}
+          name="dataInicio"
+          placeholder="data inicio"
+        />
+        <p>data fim</p>
+        <RHFDatePicker
+          control={control}
+          name="dataFim"
+          placeholder="data fim"
+        />
       </div>
-      <h1>React + Vite</h1>
-      <h2>On CodeSandbox!</h2>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR.
-        </p>
-
-        <p>
-          Tip: you can use the inspector button next to address bar to click on
-          components in the preview and open the code in the editor!
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
+      <button>Submit</button>
+    </form>
   );
 }
 
